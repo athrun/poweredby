@@ -6,7 +6,7 @@ The script will report the providers used for:
 
 - DNS Services
 - Network Operator (can be the hosting provider but also the CDN provider)
-- Email service
+- Email services
 
 ## Installation
 
@@ -41,7 +41,7 @@ Given the sample input format presented earlier:
     2015-09-06 21:21:30,415 root         INFO     Completed. 4 entries have been processed
 
     $ cat output_file.csv
-    http://www.netflix.com    netflix.com    UltraDNS    AWS Google
+    http://www.netflix.com    netflix.com    UltraDNS    AWS    Google
     http://docs.google.com    google.com    Google    Google    Google
     www.algolia.com algolia.com    Cloudflare    Cloudflare    Google
     amazon.fr    amazon.fr    UltraDNS    AWS    AWS
