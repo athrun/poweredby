@@ -19,7 +19,7 @@ DOMAIN_ALIASES = {
     "Fastly": [r'fastly'],
     "IBM/Softlayer": [r'ibm corporation', r'ibm.com', r'softlayer'],
     "Alibaba": [r'aliyun', r'taobao', r'alibaba'],
-    "OVH": [r'ovh.net', r'ovh hosting', r'OVH SAS'],
+    "OVH": [r'ovh.net', r'ovh hosting', r'OVH SAS', r'runabove'],
     "Gandi": [r'gandi.net', r'gandi'],
     "Rackspace": [r'rackspace', r'Cloud Loadbalancing as a Service-LBaaS'],
     "Iliad": [r'online.net', r'iliad', r'free.fr', r'proxad'],
