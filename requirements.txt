@@ -1,0 +1,4 @@
+aiodns==0.3.2
+ipwhois==0.10.3
+tldextract==1.7.1
+-e git+https://github.com/tqdm/tqdm.git@4f03fd960fdc96145b43ba5ad3bf7500ca29e978#egg=tqdm-master
