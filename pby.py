@@ -12,7 +12,7 @@ from tqdm import tqdm
 MAX_PARALLEL_TASKS=100
 
 DOMAIN_ALIASES = {
-    "AWS": [r'amazon', 'awsdns', 'cloudfront.net'],
+    "AWS": [r'amazon', 'awsdns', 'cloudfront.net', 'ec2'],
     "Microsoft": [r'msft.net', r'microsoft', r'msedge.net', r'hotmail.com', r'outlook.com', r'outlook.cn'],
     "Google": [r'google.com', r'google'],
     "Adobe": [r'adobe'],
@@ -20,14 +20,30 @@ DOMAIN_ALIASES = {
     "IBM/Softlayer": [r'ibm corporation', r'ibm.com', r'softlayer'],
     "Alibaba": [r'aliyun', r'taobao', r'alibaba'],
     "OVH": [r'ovh.net', r'ovh hosting', r'OVH SAS'],
-    "Illiad": [r'online.net', r'illiad', r'free.fr', r'proxad'],
+    "Gandi": [r'gandi.net', r'gandi'],
+    "Rackspace": [r'rackspace', r'Cloud Loadbalancing as a Service-LBaaS'],
+    "Iliad": [r'online.net', r'iliad', r'free.fr', r'proxad'],
     "Cloudflare": [r'cloudflare'],
     "Dyn": [r'dynect.net', r'Dynamic Network Services'],
     "Akamai": [r'akam.net', r'akamai'],
     "UltraDNS": [r'ultradns'],
     "CHINANET": [r'chinanet'],
     "China UNICOM": [r'china unicom'],
-    "Digital Ocean": [r'Digital Ocean']
+    "Digital Ocean": [r'Digital Ocean', r'DigitalOcean'],
+    "1and1": [r'1and1', r'1&1', r'Internet AG'],
+    "Claranet": [r'typhon', r'claranet', r'clara.net'],
+    "Linkbynet": [r'linkbynet'],
+    "Hetzner": [r'Hetzner'],
+    "Bouygues Tel.": [r'BOUYGUES'],
+    "SFR": [r'sfrbusinessteam.fr', r'sfr.com', r'Societe Francaise du Radiotelephone'],
+    "Orange": [r'orange-business.com', r'oleane.net', r'OBS Customer'],
+    'Ikoula': [r'ikoula'],
+    'Atos': [r'Atos Worldline', 'atos.net'],
+    'Jaguar Network': [r'Jaguar Network'],
+    'Colt': [r'coltfrance.com', r'colt-telecom.com', r'colt.net', r'COLT Technology Services'],
+    'SafeBrands': [r'safebrands.fr', 'mailclub' ],
+    'Alter Way': [r'Alter Way Hosting', 'nexen.net'],
+    'Joyent': [r'Joyent'],
 }
 
 # Compile the regex ahead of time (case insensitive)
@@ -113,7 +129,7 @@ async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
         # Return if unable to parse the domain
         if not domain:
             logging.info ("[!] Could not parse [{}] into a valid domain".format(entry))
-            print("{}\tN/A\tN/A\tN/A\tN/A".format(entry))
+            print("{}\tNone\tNone\tNone\tNone".format(entry))
             return
 
         loop = asyncio.get_event_loop()
@@ -155,7 +171,8 @@ async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
             a_ip_network = get_alias_for_domain(a_ip_network)
             #a_ip_network = ipwhois(a_ip)
 
-        print("{entry}\t{domain}\t{ns_host}\t{a_ip_network}\t{mx_host}".format(**locals()))
+        print("{entry}\t{domain}\t{ns_host}\t{a_ip_network}\t{mx_host}".format(**locals()),
+                flush=True)
 
 """
     Get the registered domain from an URL or an hostname.
@@ -222,7 +239,8 @@ def stop_loop(loop=asyncio.get_event_loop()):
     SIGINT or SIGTERM interrupt handler
 """
 def on_interrupt_signal():
-    logging.warning("*** Got Interrupt Signal ***")
+    logging.warning("*** Got Interrupt Signal. ***")
+    logging.warning("*** Shutting down the loop (can take a long time). ***")
     stop_loop()
 
 """
