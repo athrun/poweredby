@@ -12,14 +12,14 @@ from tqdm import tqdm
 MAX_PARALLEL_TASKS=100
 
 DOMAIN_ALIASES = {
-    "AWS": [r'amazon', 'awsdns', 'cloudfront.net', 'ec2'],
+    "AWS": [r'amazon', 'awsdns', 'cloudfront', 'ec2'],
     "Microsoft": [r'msft.net', r'microsoft', r'msedge.net', r'hotmail.com', r'outlook.com', r'outlook.cn'],
     "Google": [r'google.com', r'google'],
     "Adobe": [r'adobe'],
     "Fastly": [r'fastly'],
     "IBM/Softlayer": [r'ibm corporation', r'ibm.com', r'softlayer'],
     "Alibaba": [r'aliyun', r'taobao', r'alibaba'],
-    "OVH": [r'ovh.net', r'ovh hosting', r'OVH SAS', r'runabove'],
+    "OVH": [r'ovh.net', r'runabove', r'ovh\s'],
     "Gandi": [r'gandi.net', r'gandi'],
     "Rackspace": [r'rackspace', r'Cloud Loadbalancing as a Service-LBaaS'],
     "Iliad": [r'online.net', r'iliad', r'free.fr', r'proxad'],
@@ -35,8 +35,8 @@ DOMAIN_ALIASES = {
     "Linkbynet": [r'linkbynet'],
     "Hetzner": [r'Hetzner'],
     "Bouygues Tel.": [r'BOUYGUES'],
-    "SFR": [r'sfrbusinessteam.fr', r'sfr.com', r'Societe Francaise du Radiotelephone'],
-    "Orange": [r'orange-business.com', r'oleane.net', r'OBS Customer'],
+    "SFR": [r'sfrbusinessteam.fr', r'sfr.com', r'sfr.fr', r'Societe Francaise du Radiotelephone', 'SFR Business', 'SFR GPRS'],
+    "Orange": [r'orange-business.com', r'oleane.net', r'OBS Customer', r'francetelecom.com'],
     'Ikoula': [r'ikoula'],
     'Atos': [r'Atos Worldline', 'atos.net'],
     'Jaguar Network': [r'Jaguar Network'],
@@ -44,6 +44,10 @@ DOMAIN_ALIASES = {
     'SafeBrands': [r'safebrands.fr', 'mailclub' ],
     'Alter Way': [r'Alter Way Hosting', 'nexen.net'],
     'Joyent': [r'Joyent'],
+    'Oxalide': [r'Oxalide'],
+    'Peer 1': [r'Peer 1\s'],
+    'Integra': [r'Integra'],
+    'Linode': [r'linode'],
 }
 
 # Compile the regex ahead of time (case insensitive)
@@ -135,13 +139,8 @@ async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
         loop = asyncio.get_event_loop()
 
         queries = {}
-        for record in ('A', 'MX', 'SOA', 'NS'):
+        for record in ('A', 'MX', 'NS'):
             queries[record] = dns_query_safe(domain, record)
-        
-        # Dealing with SOA record
-        #print("SOA for {}".format(domain))
-        #soa = await queries["SOA"]
-        #soa_host = soa.nsname
 
         # Perform DNS queries in parallel
         ns, a, mx = await asyncio.gather(queries["NS"], queries["A"], queries["MX"],
@@ -165,11 +164,8 @@ async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
         # to know when all Tasks are completed.
         a_ip_network = None
         if a_ip:
-            #pass
-            #await loop.run_in_executor(executor, small_test, domain)
             a_ip_network = await loop.run_in_executor(_EXECUTOR, ipwhois, a_ip)
             a_ip_network = get_alias_for_domain(a_ip_network)
-            #a_ip_network = ipwhois(a_ip)
 
         print("{entry}\t{domain}\t{ns_host}\t{a_ip_network}\t{mx_host}".format(**locals()),
                 flush=True)
