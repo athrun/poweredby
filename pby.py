@@ -3,6 +3,7 @@
 import sys, io, os, re
 import asyncio, aiodns
 from concurrent.futures import ProcessPoolExecutor
+from functools import wraps
 import signal
 import logging
 import tldextract
@@ -183,6 +184,21 @@ def get_registered_domain(url):
         return domain
     else:
         return None
+
+"""
+    Decorator fonction to filter the fields which will be
+    looked up by IPWhois._parse_fields() for performance
+    reasons. Drastic speed boost.
+"""
+def filtered_whois(f, field_filter=()):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        fields_dict = args[2]
+        if len(field_filter) > 0:
+            fields_dict = {k:v for (k,v) in fields_dict.items() if k in field_filter}
+        return f(args[0], args[1], fields_dict, **kwargs)
+    return wrapper
+IPWhois._parse_fields = filtered_whois(IPWhois._parse_fields, ("name", "description"))
 
 """
     Returns IPWhois information for a given ip_address.
