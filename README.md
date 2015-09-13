@@ -45,3 +45,7 @@ Given the sample input format presented earlier:
     http://docs.google.com    google.com    Google    Google    Google
     www.algolia.com algolia.com    Cloudflare    Cloudflare    Google
     amazon.fr    amazon.fr    UltraDNS    AWS    AWS
+
+## Licensing
+
+MIT License.
