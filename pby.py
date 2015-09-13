@@ -23,7 +23,7 @@ DOMAIN_ALIASES = {
     "OVH": [r'ovh.net', r'runabove', r'ovh\s'],
     "Gandi": [r'gandi.net', r'gandi'],
     "Rackspace": [r'rackspace', r'Cloud Loadbalancing as a Service-LBaaS'],
-    "Iliad": [r'online.net', r'iliad', r'free.fr', r'proxad'],
+    "Iliad": [r'online.net', r'iliad', r'free.fr', r'proxad', r'dedibox'],
     "Cloudflare": [r'cloudflare'],
     "Dyn": [r'dynect.net', r'Dynamic Network Services'],
     "Akamai": [r'akam.net', r'akamai'],
