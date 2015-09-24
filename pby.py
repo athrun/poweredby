@@ -2,6 +2,7 @@
 
 import sys, io, os, re
 import asyncio, aiodns
+import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
 import signal
@@ -56,7 +57,7 @@ DOMAIN_ALIASES = {
 for k, l in DOMAIN_ALIASES.items():
     DOMAIN_ALIASES[k] = [re.compile(i, re.IGNORECASE) for i in l]
  
-_EXECUTOR = ProcessPoolExecutor(max_workers=10)
+
 
 _detailed_output = False
 _debug_mode = False
@@ -144,8 +145,9 @@ async def dns_query_safe(hostname, record_type, resolver=aiodns.DNSResolver()):
     Max number of parallel processing is bound by a semaphore (sem).
 """
 async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
-                                executor=_EXECUTOR):
-
+                                executor=None):
+    if not executor:
+        executor = _EXECUTOR
     with (await sem):
         # The semaphore will ensure no more than
         # MAX_PARALLEL_TASKS are scheduled in parallel
@@ -267,6 +269,27 @@ def get_alias_for_domain(domain_information):
                     return alias
 
     return domain_information
+
+"""
+    Custom ProcessPoolExecutor which sets worker process
+    as daemons.
+"""
+class PbyProcessPoolExecutor(ProcessPoolExecutor):
+    def __init__(self, max_workers=None):
+        super().__init__(max_workers)
+
+    def _adjust_process_count(self):
+        from concurrent.futures.process import _process_worker
+        
+        for _ in range(len(self._processes), self._max_workers):
+            p = multiprocessing.Process(
+                    target=_process_worker,
+                    args=(self._call_queue,
+                          self._result_queue),
+                    daemon=True)
+            p.start()
+            self._processes[p.pid] = p
+_EXECUTOR = PbyProcessPoolExecutor(max_workers=10)
 
 """
     Cancell all tasks and stop the loop
