@@ -9,6 +9,7 @@ import logging
 import tldextract
 from ipwhois import IPWhois
 from tqdm import tqdm
+import argparse
 
 MAX_PARALLEL_TASKS=100
 
@@ -56,6 +57,25 @@ for k, l in DOMAIN_ALIASES.items():
     DOMAIN_ALIASES[k] = [re.compile(i, re.IGNORECASE) for i in l]
  
 _EXECUTOR = ProcessPoolExecutor(max_workers=10)
+
+_detailed_output = False
+_debug_mode = False
+"""
+    Parse command line arguments
+"""
+def parse_args():
+    global _detailed_output, _debug_mode
+    parser = argparse.ArgumentParser(description='Collect domain information.')
+    parser.add_argument('--detailed', action='store_true',
+                        help="provide detailed information")
+    parser.add_argument('--debug', action='store_true',
+                        help="enable debug mode")
+    args = parser.parse_args()
+    if args.detailed:
+        _detailed_output = True
+    if args.debug:
+        _debug_mode = True
+    return args
 
 """ Stream from stdin
     'rt' mode = unicode text, 'rb' = binary stream
@@ -163,13 +183,32 @@ async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
         # loop (ex: with loop.create_task(...)). But as of py3.5rc2, it's not
         # added to the task list (asyncio.Task.all_tasks) making it impossible
         # to know when all Tasks are completed.
-        a_ip_network = None
+        whois_info = None
+        a_ip_network_description = None
         if a_ip:
-            a_ip_network = await loop.run_in_executor(_EXECUTOR, ipwhois, a_ip)
-            a_ip_network = get_alias_for_domain(a_ip_network)
+            whois_info = await loop.run_in_executor(_EXECUTOR, ipwhois, a_ip)
+            a_ip_network_description = whois_info.get("description", "N/A").split("\n")[0]
+            a_ip_network_description = get_alias_for_domain(a_ip_network_description)
 
-        print("{entry}\t{domain}\t{ns_host}\t{a_ip_network}\t{mx_host}".format(**locals()),
-                flush=True)
+        if not _detailed_output:
+            print("{entry}\t{domain}\t{ns_host}\t{mx_host}\t{a_ip_network_description}".format(**locals()),
+                  flush=True)
+        else:
+            line = "{entry}\t{domain}\t{ns}\t{mx}\t{net_desc}\t{net_handle}\t" + \
+                    "{net_name}\t{net_country}\t{net_cidr}"
+            line = line.format(**{
+                    "entry": entry,
+                    "domain": domain,
+                    "ns": ns_host,
+                    "mx": mx_host,
+                    "net_desc": a_ip_network_description,
+                    "net_handle": whois_info.get("handle", "N/A"),
+                    "net_name": whois_info.get("name", "N/A"),
+                    "net_country": whois_info.get("country", "N/A"),
+                    "net_cidr": whois_info.get("cidr", "N/A")
+                })
+            print(line, flush=True)
+
 
 """
     Get the registered domain from an URL or an hostname.
@@ -198,16 +237,21 @@ def filtered_whois(f, field_filter=()):
             fields_dict = {k:v for (k,v) in fields_dict.items() if k in field_filter}
         return f(args[0], args[1], fields_dict, **kwargs)
     return wrapper
-IPWhois._parse_fields = filtered_whois(IPWhois._parse_fields, ("name", "description"))
+IPWhois._parse_fields = filtered_whois(IPWhois._parse_fields,
+                                        ("name", "description", "handle"
+                                            "cidr", "country"))
 
 """
     Returns IPWhois information for a given ip_address.
+    Returns a dictionary of name, handle, description, country, cidr
 """
 def ipwhois(ip_address):
     try:
         whois = IPWhois(ip_address).lookup()
-        result = whois["nets"][0].get("description", "N/A")
-        return result.split("\n")[0] # return only first line (if multilines)
+        whois_info = whois["nets"][0]
+        return whois_info
+        #result = whois["nets"][0].get("description", "N/A")
+        #return result.split("\n")[0] # return only first line (if multilines)
     except:
         return ip_address
 
@@ -227,10 +271,11 @@ def get_alias_for_domain(domain_information):
 """
     Cancell all tasks and stop the loop
 """
-def stop_loop(loop=asyncio.get_event_loop()):
+def stop_loop():
+    loop = asyncio.get_event_loop()
     logging.debug("***** Stopping the loop *****")
     if loop.is_running():
-        tasks = asyncio.Task.all_tasks(loop=loop)
+        tasks = asyncio.Task.all_tasks(loop)
         if len(tasks) > 0:
             # Cancel all tasks
             logging.debug("Cancelling all pending coroutines...")
@@ -265,17 +310,23 @@ def setup_logger():
         '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    if _debug_mode:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
 def main():
     # Setup logger
     setup_logger()
 
+    # Parse args
+    parse_args()
+
     # Get the main event loop
     loop = asyncio.get_event_loop()
 
     # Set asyncio debuging
-    loop.set_debug(False)
+    loop.set_debug(_debug_mode)
     
     # Schedule main entry point
     loop.call_soon(process_stdin, process_entry)

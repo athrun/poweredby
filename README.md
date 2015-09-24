@@ -30,7 +30,7 @@ Here's a sample valid input file:
 
 The tool will produce on the standard output a Tab-separated listing of this nature:
 
-    <Item>    <Root Domain>    <DNS Provider>    <Hosting Provider>    <Email Provider>
+    <Item>    <Root Domain>    <DNS Provider>    <Email Provider>    <Hosting Provider>
 
 ## Sample usage
 
@@ -41,9 +41,9 @@ Given the sample input format presented earlier:
     2015-09-06 21:21:30,415 root         INFO     Completed. 4 entries have been processed
 
     $ cat output_file.csv
-    http://www.netflix.com    netflix.com    UltraDNS    AWS    Google
+    http://www.netflix.com    netflix.com    UltraDNS    Google    AWS
     http://docs.google.com    google.com    Google    Google    Google
-    www.algolia.com algolia.com    Cloudflare    Cloudflare    Google
+    www.algolia.com algolia.com    Cloudflare    Google    Cloudflare
     amazon.fr    amazon.fr    UltraDNS    AWS    AWS
 
 ## Licensing
