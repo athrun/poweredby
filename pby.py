@@ -11,6 +11,7 @@ import tldextract
 from ipwhois import IPWhois
 from tqdm import tqdm
 import argparse
+import traceback
 
 MAX_PARALLEL_TASKS=100
 
@@ -128,7 +129,10 @@ def check_tasks_status(loop):
 """
 async def wait_with_progress(coros):
     for f in tqdm(asyncio.as_completed(coros), total=len(coros), leave=True):
-        await f
+        try:
+            await f
+        except:
+            logging.warning(traceback.format_exc())
 
 """
     Asynchronous DNS resolver (safe)
@@ -185,7 +189,7 @@ async def process_entry(entry, sem=asyncio.Semaphore(MAX_PARALLEL_TASKS),
         # loop (ex: with loop.create_task(...)). But as of py3.5rc2, it's not
         # added to the task list (asyncio.Task.all_tasks) making it impossible
         # to know when all Tasks are completed.
-        whois_info = None
+        whois_info = {}
         a_ip_network_description = None
         if a_ip:
             whois_info = await loop.run_in_executor(_EXECUTOR, ipwhois, a_ip)
