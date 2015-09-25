@@ -280,7 +280,7 @@ class PbyProcessPoolExecutor(ProcessPoolExecutor):
 
     def _adjust_process_count(self):
         from concurrent.futures.process import _process_worker
-        
+
         for _ in range(len(self._processes), self._max_workers):
             p = multiprocessing.Process(
                     target=_process_worker,
@@ -289,7 +289,7 @@ class PbyProcessPoolExecutor(ProcessPoolExecutor):
                     daemon=True)
             p.start()
             self._processes[p.pid] = p
-_EXECUTOR = PbyProcessPoolExecutor(max_workers=10)
+_EXECUTOR = PbyProcessPoolExecutor(max_workers=2)
 
 """
     Cancell all tasks and stop the loop
