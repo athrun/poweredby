@@ -52,6 +52,8 @@ DOMAIN_ALIASES = {
     'Peer 1': [r'Peer 1\s'],
     'Integra': [r'Integra'],
     'Linode': [r'linode'],
+    'EIG': [r'unifiedlayer', r'websitewelcome', r'bluehost', r'hostgator'],
+    'DreamHost': [r'New Dream Network']
 }
 
 # Compile the regex ahead of time (case insensitive)
@@ -255,6 +257,9 @@ def ipwhois(ip_address):
     try:
         whois = IPWhois(ip_address).lookup()
         whois_info = whois["nets"][0]
+        # Special case for JNIC. Use the second network info in that case.
+        if whois_info.get("description") == "Japan Network Information Center":
+            whois_info = whois["nets"][1]
         return whois_info
         #result = whois["nets"][0].get("description", "N/A")
         #return result.split("\n")[0] # return only first line (if multilines)
@@ -293,7 +298,7 @@ class PbyProcessPoolExecutor(ProcessPoolExecutor):
                     daemon=True)
             p.start()
             self._processes[p.pid] = p
-_EXECUTOR = PbyProcessPoolExecutor(max_workers=2)
+_EXECUTOR = PbyProcessPoolExecutor(max_workers=10)
 
 """
     Cancell all tasks and stop the loop
