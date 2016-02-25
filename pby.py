@@ -52,8 +52,8 @@ DOMAIN_ALIASES = {
     'Peer 1': [r'Peer 1\s'],
     'Integra': [r'Integra'],
     'Linode': [r'linode'],
-    'EIG': [r'unifiedlayer', r'websitewelcome', r'bluehost', r'hostgator'],
-    'DreamHost': [r'New Dream Network']
+    'EIG': [r'unifiedlayer', r'Unified Layer', r'websitewelcome', r'bluehost', r'hostgator'],
+    'DreamHost': [r'New Dream Network', r'dreamhost.com']
 }
 
 # Compile the regex ahead of time (case insensitive)
@@ -257,14 +257,16 @@ def ipwhois(ip_address):
     try:
         whois = IPWhois(ip_address).lookup()
         whois_info = whois["nets"][0]
-        # Special case for JNIC. Use the second network info in that case.
+        # Special case for JNIC.
+        # Use the second network info in that case.
         if whois_info.get("description") == "Japan Network Information Center":
             whois_info = whois["nets"][1]
         return whois_info
         #result = whois["nets"][0].get("description", "N/A")
         #return result.split("\n")[0] # return only first line (if multilines)
     except:
-        return ip_address
+        # Return empty dict if we failed to get whois info
+        return {}
 
 """
     Return the network owner's alias
